@@ -1,14 +1,13 @@
 using API.Data;
 using API.Entities;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")] //localhost:5001/api/Members
-    [ApiController]
-    public class MembersController(AppDbContext context) : ControllerBase
+
+    public class MembersController(AppDbContext context) : BaseApiController
     {
         // we inject the AppDbContext, what that means in practice is that when we receive a HTTP request is received by a .net application, it checks the route and forwards it to the appropriate controller, like if we receive a get request to this localhost:5001/api/Members it will be passed to this controller
 
@@ -25,6 +24,7 @@ namespace API.Controllers
         //     var members = context.Users.ToList();
         //     return members;
         // }
+
         [HttpGet]
         public async Task<ActionResult<IReadOnlyList<AppUser>>> GetMembers()
         {
@@ -34,6 +34,7 @@ namespace API.Controllers
             return members;
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<AppUser>> GetMember(string id)
         {

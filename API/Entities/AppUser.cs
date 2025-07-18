@@ -12,4 +12,6 @@ public class AppUser
     public required string DisplayName { get; set; }
     //string gives the null waring because it is the reference type and it is a common type of exception when somebody try to use the property while the compiler don't know its null or not that exception is called nulled reference exception.
     public required string Email { get; set; }
+    public required byte[] PasswordHash { get; set; }
+    public required byte[] PasswordSalt { get; set; }
 }
