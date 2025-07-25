@@ -1,10 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
+import { Nav } from "../layout/nav/nav";
+import { AccountService } from '../core/services/account-service';
+import { Home } from "../features/home/home";
+import { User } from '../types/user';
 
 @Component({
   selector: 'app-root',
-  imports: [],
+  imports: [Nav, Home],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -24,10 +28,11 @@ import { lastValueFrom } from 'rxjs';
 
 
 export class App implements OnInit {
+  private accountService = inject(AccountService)
   private http = inject(HttpClient)
-  protected title = 'Dating APP';
+  protected title = 'Learning APP';
   // protected members: any;
-  protected members = signal<any>([]) //this is fine grained change detection, so when the value of this signal changes then anything that is using this signal will be notified.
+  protected members = signal<User[]>([]) //this is fine grained change detection, so when the value of this signal changes then anything that is using this signal will be notified.
 
 
   // ngOnInit(): void {
@@ -52,11 +57,20 @@ export class App implements OnInit {
   // }
 
   async ngOnInit() {
+    this.setCurrentUser();
     this.members.set(await this.getMembers())
+  }
+
+  setCurrentUser() {
+    const userString = localStorage.getItem('user');
+    if(!userString) return;
+
+    const user = JSON.parse(userString);
+    this.accountService.currentUser.set(user)
   }
   async getMembers() {
     try {
-      return lastValueFrom(this.http.get('https://localhost:5001/api/members'));
+      return lastValueFrom(this.http.get<User[]>('https://localhost:5001/api/members'));
     } catch (error) {
       console.log(error)
       throw error
