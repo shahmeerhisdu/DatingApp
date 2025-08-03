@@ -6,6 +6,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +45,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 **/
 
 var app = builder.Build();
+//Middleware comes on the top of the request pipeline
+app.UseMiddleware<ExceptionMiddleware>();
+
 
 // Configure the HTTP request pipeline, section under this is the middleware section, ordering in this section is important if we put the cors command after the run command that it will not be executed
 app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:4200","https://localhost:4200"));
