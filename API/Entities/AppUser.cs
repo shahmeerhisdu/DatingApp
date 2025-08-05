@@ -8,10 +8,16 @@ namespace API.Entities;
 public class AppUser
 // this has to be public because entity framework is outside of our class
 {
+    //each appuser will have an associated member with it, and in entity framework we call this relations, one app user is going to be related with one member
+
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public required string DisplayName { get; set; }
     //string gives the null waring because it is the reference type and it is a common type of exception when somebody try to use the property while the compiler don't know its null or not that exception is called nulled reference exception.
     public required string Email { get; set; }
+    public string? ImageUrl { get; set; }
     public required byte[] PasswordHash { get; set; }
     public required byte[] PasswordSalt { get; set; }
+
+    // Navigation Property
+    public Member Member { get; set; } = null!;
 }

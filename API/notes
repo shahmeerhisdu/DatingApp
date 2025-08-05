@@ -1,0 +1,36 @@
+Repository Pattern
+    A Repository mediates between the domain and the data mapping layers, acting like an in-memory domain object collection.
+
+What we are doing for now?
+    We have the web server in our API, and request come in to our controller end point, now in our controller we are injecting the DB context, and our DbContext represents our session with the database, and our DbContext is translating the logic and queries we are writing in the controller and fishing out the data from the database and returning it to the controller so that it can be returned to the client.
+
+What we are going to introduce?
+    Effectively a layer of abstraction, we are gonna introduce the repository, so instead of the controller going directly to the DbContext, it then uses the repository and executes the methods inside there, now the repository is gonna use the dbcontext to go and execute the logic inside this, but we are doing is adding the another layer of abstraction to it, and this may seem unnecessary because the DbContext acts as not a repository pattern but acts as another pattern that we will talk about later. The unit of work and the DbSets that we create inside the DbContext they are like repositories and thats a fair argument.
+
+But we are going to look at why we would still add this layer of abstraction from what is considered to be already the unit of work and repository pattern in action inside the DbContext
+
+Reasons:  
+    1: It encapsulates the logic 
+        DB context says I support the following methods
+            Users.First();
+            Users.FirstOrDefault()
+            Users.SingleOrDefault()
+            Users.Include(x => x.Thing).FirstOrDefault
+            + 10000.. other methods
+        Repository says I support the following methods
+            GetUser();
+            GetUsers();
+            UpdateUser()
+            SaveAll()
+    2: Reduce Duplicate the query logic
+        so if we have a method in the users controller to get the user and include it some related data, but we also need that same logic in the message controller and we also need that in other controller as well we would end up writing the same queries over and over again, if use the repository we create the logic in the one place, and then we can simply execute the method from the repository in our different controllers
+    3: Promotes Testibility
+        makes the testing easier, it is much easier to test against the repository rather then against the DbContext. Entity framework has made this easier now then it use to be. Still it is easier to test agaist the interface of the repository that it is to test against the DbContext, our repositories will gonna have the interfaces and we gonna have the implementation class for the repository, so what we are injecting to our controllers is gonna be the repository interface, and then we have the implementation class that contains all of the actual logic. Now if we were to introduce the testing then we would not need to implement the method inside the repository inside our unit test we could mock the repository and we can even use the mocking framework, we hardly need any code to mock the repository.
+    4: It decouples application from persistence framework.
+    5: All Database queries are centralised and not scattered throughout the app.
+    6: Allows us to change the ORM easily.
+
+Disadvantage of Repository Pattern
+    1: It is the abstraction of an abstraction, entity framework is an abstraction from our database. Repository is an abstraction from the entity framework.
+    2: Each root entity should have its own repository which means more code.
+    3: We need to implement the UnitOfWork pattern to control transactions, as what we are going to do is injecting different instances of the data context into different repositories so later on we will gonna need to introduce a pattern to control the transactions that are going on here.
