@@ -1,13 +1,14 @@
-using API.Data;
 using API.Entities;
+using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
+    [Authorize]
 
-    public class MembersController(AppDbContext context) : BaseApiController
+    // Always use the interface not the implementation class because it will not work as specified in the program.cs
+    public class MembersController(IMemberRepository memberRepository) : BaseApiController
     {
         // we inject the AppDbContext, what that means in practice is that when we receive a HTTP request is received by a .net application, it checks the route and forwards it to the appropriate controller, like if we receive a get request to this localhost:5001/api/Members it will be passed to this controller
 
@@ -26,23 +27,31 @@ namespace API.Controllers
         // }
 
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<AppUser>>> GetMembers()
+        public async Task<ActionResult<IReadOnlyList<Member>>> GetMembers()
         {
             // so what difference does this make?
             // So instead of request being blocked when it comes in to this API controller once we are awaiting for something to happen and comeback from our database, instead action of going out to another thread is delegated to another thread, that thread can go about the business for querying the databse, if thats the long running database query it is not gonna effect our API controller from servicing our request.
-            var members = await context.Users.ToListAsync();
-            return members;
+            // var members = await context.Users.ToListAsync();
+            // return members;
+
+            return Ok(await memberRepository.GetMembersAsync());
+            // by this Ok(await memberRepository.GetMembersAsync()) we loose the type safety, if we change the return type from member to AppUser it will not complain because we are using the Ok response, so IActionResult was used as a way to get a bit of type safety in controller method, and it works for most things a part from list and a repository.
         }
 
-        [Authorize]
         [HttpGet("{id}")]
-        public async Task<ActionResult<AppUser>> GetMember(string id)
+        public async Task<ActionResult<Member>> GetMember(string id)
         {
             // var member = context.Users.Where(u => u.Id == id).FirstOrDefault();
-            var member = await context.Users.FindAsync(id);
-            if (member != null)
-                return member;
-            return NotFound();
+            var member = await memberRepository.GetMemberByIdAsync(id);
+            if (member == null)
+                return NotFound();
+            return member;
+        }
+
+        [HttpGet("{id}/photos")]
+        public async Task<ActionResult<IReadOnlyList<Photo>>> GetMemberPhotos(string id)
+        {
+            return Ok(await memberRepository.GetPhotosForMemberAsync(id));
         }
 
     }

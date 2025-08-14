@@ -19,7 +19,10 @@ public class MemberRepository(AppDbContext context) : IMemberRepository
 
     public async Task<IReadOnlyList<Photo>> GetPhotosForMemberAsync(string memberId)
     {
-        return await context.Members.Where(x => x.Id == memberId).SelectMany(x => x.Photos).ToListAsync();
+        return await context.Members
+        .Where(x => x.Id == memberId)
+        .SelectMany(x => x.Photos) //select many allows us to do the projection, although we are quering the Members but we will get the list of photos
+        .ToListAsync();
     }
 
     public async Task<bool> SaveAllAsync()
