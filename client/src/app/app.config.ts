@@ -7,6 +7,7 @@ import { InitService } from '../core/services/init-service';
 import { AccountService } from '../core/services/account-service';
 import { lastValueFrom } from 'rxjs';
 import { errorInterceptor } from '../core/interceptors/error-interceptor';
+import { jwtInterceptor } from '../core/interceptors/jwt-interceptor';
 
 //when we need to provide the application as a whole we need to use the applicationconfig
 
@@ -15,7 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(routes, withViewTransitions()),
-    provideHttpClient(withInterceptors([errorInterceptor])),
+    provideHttpClient(withInterceptors([errorInterceptor, jwtInterceptor])),
     provideAppInitializer(async () => {
       const initService = inject(InitService);
 
