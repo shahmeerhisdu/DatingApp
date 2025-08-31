@@ -36,7 +36,7 @@
                     <span>{{selectedTheme()}}</span>
 
                 </button>
-                <ul tabindex="1" class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
+                <ul tabindex="1" class="dropdown-content menu bg-base-100 rounded-box z-50 w-52 p-2 shadow-sm">
                     @for (theme of themes; track $index) {
                         <li (click)="handleSelectTheme(theme)">
                             <a>{{theme}}</a>
@@ -53,7 +53,7 @@
                     <span>{{user.displayName}}</span>
                 </div>
                 <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
-                    <li><a>Edit Profile</a></li>
+                    <li><a routerLink="/members/{{user.id}}">Edit Profile</a></li>
                     <li><a (click)="logout()">Logout</a></li>
                 </ul>
             </div>
