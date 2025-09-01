@@ -38,7 +38,7 @@
             </h3>
 
             @if(isCurrentUser()){
-                <button (click)="memberService.editMode.set(!memberService.editMode())" class="btn btn-outline"> {{memberService.editMode() ? 'Edit' : 'Cancel'}}</button>
+                <button (click)="memberService.editMode.set(!memberService.editMode())" class="btn btn-outline"> {{memberService.editMode() ? 'Cancel' : 'Edit'}}</button>
             }
         </div>
 
