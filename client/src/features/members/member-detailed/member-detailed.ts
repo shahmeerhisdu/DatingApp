@@ -20,7 +20,7 @@ export class MemberDetailed implements OnInit {
   private accountService = inject(AccountService);
   private router = inject(Router); // we need to get the hold of the router to get the tile functionality done.
   // protected member$?: Observable<Member>;
-  protected member = signal<Member | undefined>(undefined);
+  // protected member = signal<Member | undefined>(undefined);
   protected title = signal<string | undefined>('Profile');
 
   //edit working
@@ -31,10 +31,11 @@ export class MemberDetailed implements OnInit {
 
   ngOnInit(): void {
     // this.member$ = this.loadMember();
-    this.route.data.subscribe({
-      next: data => this.member.set(data['member']) //get the member from the root by resolver
+    // this.route.data.subscribe({
+    //   next: data => this.member.set(data['member']) //get the member from the root by resolver
 
-    })
+    // })
+    
     // this.member()!.dateOfBirth = '2025-07-20'
     // console.log(this.member()?.dateOfBirth);
     this.title.set(this.route.firstChild?.snapshot?.title) //getting the title from the route

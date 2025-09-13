@@ -1,4 +1,7 @@
+using System.Security.Claims;
+using API.DTOs;
 using API.Entities;
+using API.Extensions;
 using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -52,6 +55,43 @@ namespace API.Controllers
         public async Task<ActionResult<IReadOnlyList<Photo>>> GetMemberPhotos(string id)
         {
             return Ok(await memberRepository.GetPhotosForMemberAsync(id));
+        }
+
+        [HttpPut]
+        public async Task<ActionResult> UpdateMember(MemberUpdateDto memberUpdateDto)
+        {
+            // var memberId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            // we have to get the member by the Id so claimtypes contain the memberId in the name identifier
+
+            // if (memberId == null)
+            // {
+            //     return BadRequest("Oops - no Id found in the token");
+            // }
+
+            var memberId = User.GetMemberId();
+
+            var member = await memberRepository.GetMemberForUpdate(memberId);
+            if (member == null)
+            {
+                return BadRequest("Could not get the member");
+            }
+
+            member.DisplayName = memberUpdateDto.DisplayName ?? member.DisplayName;
+            member.Description = memberUpdateDto.Description ?? member.Description;
+            member.City = memberUpdateDto.City ?? member.City;
+            member.Country = memberUpdateDto.Country ?? member.Country;
+
+            member.User.DisplayName = memberUpdateDto.DisplayName ?? member.User.DisplayName;
+
+            // memberRepository.Update(member); //its just an optional
+
+            if (await memberRepository.SaveAllAsync())
+            {
+                return NoContent();
+            }
+
+            return BadRequest("Failed to Update the Member");
+
         }
 
     }
