@@ -11,7 +11,7 @@ namespace API.Controllers
     [Authorize]
 
     // Always use the interface not the implementation class because it will not work as specified in the program.cs
-    public class MembersController(IMemberRepository memberRepository) : BaseApiController
+    public class MembersController(IMemberRepository memberRepository, IPhotoService photoService) : BaseApiController
     {
         // we inject the AppDbContext, what that means in practice is that when we receive a HTTP request is received by a .net application, it checks the route and forwards it to the appropriate controller, like if we receive a get request to this localhost:5001/api/Members it will be passed to this controller
 
@@ -94,5 +94,41 @@ namespace API.Controllers
 
         }
 
-    }
+        [HttpPost("add-photo")]
+
+        public async Task<ActionResult<Photo>> AddPhoto(IFormFile file)
+        {
+            var member = await memberRepository.GetMemberForUpdate(User.GetMemberId());
+
+            if (member == null) return BadRequest("Can't update the member");
+
+            var result = await photoService.UploadPhotoAsync(file);
+
+            if (result.Error != null) return BadRequest(result.Error.Message);
+
+            var photo = new Photo
+            {
+                Url = result.SecureUrl.AbsoluteUri,
+                PublicId = result.PublicId,
+                MemberId = User.GetMemberId()
+            };
+
+            if (member.ImageUrl == null)
+            {
+                member.ImageUrl = photo.Url;
+                member.User.ImageUrl = photo.Url;
+            }
+
+            member.Photos.Add(photo);
+
+            if (await memberRepository.SaveAllAsync())
+            {
+                return photo;
+            }
+
+            return BadRequest("Problem adding photo");
+
+        }
+
+}
 }
