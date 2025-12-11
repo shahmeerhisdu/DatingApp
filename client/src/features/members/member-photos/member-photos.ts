@@ -7,10 +7,11 @@ import { AsyncPipe } from '@angular/common';
 import { ImageUpload } from '../../../shared/image-upload/image-upload';
 import { AccountService } from '../../../core/services/account-service';
 import { User } from '../../../types/user';
+import { StartButton } from "../../../shared/start-button/start-button";
 
 @Component({
   selector: 'app-member-photos',
-  imports: [ImageUpload],
+  imports: [ImageUpload, StartButton],
   templateUrl: './member-photos.html',
   styleUrl: './member-photos.css'
 })
