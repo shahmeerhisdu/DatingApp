@@ -130,15 +130,15 @@ namespace API.Controllers
 
         }
 
-        [HttpPut("set-main-photo/{photoid}")]
+        [HttpPut("set-main-photo/{photoId}")]
 
-        public async Task<ActionResult> SetMainPhoto(int photoid)
+        public async Task<ActionResult> SetMainPhoto(int photoId)
         {
             var member = await memberRepository.GetMemberForUpdate(User.GetMemberId());
 
             if (member == null) return BadRequest("Can not get the member from the token");
 
-            var photo = member.Photos.SingleOrDefault(x => x.Id == photoid);
+            var photo = member.Photos.SingleOrDefault(x => x.Id == photoId);
 
             if(member.ImageUrl == photo?.Url || photo == null)// if the image is same as the current image then no need to set the image again
             {
@@ -151,6 +151,33 @@ namespace API.Controllers
             if (await memberRepository.SaveAllAsync()) return NoContent();
 
             return BadRequest("Problem setting the main photo");
+        }
+
+        [HttpDelete("delete-photo/{photoId}")]
+        public async Task<ActionResult> DeletePhoto(int photoId)
+        {
+            var member = await memberRepository.GetMemberForUpdate(User.GetMemberId());
+
+            if (member == null) return BadRequest("Can not get the member from the token");
+
+            var photo = member.Photos.SingleOrDefault(x => x.Id == photoId);
+
+            if (photo == null || photo.Url == member.ImageUrl)
+            {
+                return BadRequest("This photo can't be deleted");
+            }
+
+            if (photo.PublicId != null)
+            {
+                var result = await photoService.DeletePhotoAsync(photo.PublicId);
+                if (result.Error != null) return BadRequest(result.Error.Message);
+            }
+
+            member.Photos.Remove(photo);
+
+            if (await memberRepository.SaveAllAsync()) return Ok();
+
+            return BadRequest("Problem deleting the photo");
         }
 
     }
