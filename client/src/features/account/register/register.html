@@ -18,11 +18,11 @@
             </label>
             <label class="floating-label">
                 <span>Confirm Password</span>
-                <input class="input w-full" formControlName="confirmPassword" placeholder="Confirm Password">
+                <input class="input w-full" type="password" formControlName="confirmPassword" placeholder="Confirm Password">
             </label>
             <div class="flex items-center justify-end gap-3">
                 <button (click)="cancel()" type="button" class="btn">Cancel</button>
-                <button class="btn btn-primary" type="submit">Register</button>
+                <button class="btn btn-primary" [disabled]="!registerForm.valid" type="submit">Register</button>
             </div>
         </form>
     </div>
