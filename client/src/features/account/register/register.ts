@@ -1,4 +1,4 @@
-import { Component, inject, input, OnInit, output } from '@angular/core';
+import { Component, inject, input, OnInit, output, signal, Signal } from '@angular/core';
 import { AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { RegisterCreds, User } from '../../../types/user';
 import { AccountService } from '../../../core/services/account-service';
@@ -18,20 +18,29 @@ export class Register {
   // membersFromHome = input.required<User[]>(); // this is the other way of getting the data from the parent.
   cancelRegister = output<boolean>();
   protected creds = {} as RegisterCreds
-  protected registerForm: FormGroup;
+  protected credentialsForm: FormGroup;
+  protected profileForm: FormGroup;
+  protected currentStep =  signal(1);
 
   constructor() {
-    this.registerForm = this.fb.group({
+    this.credentialsForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       displayName: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(8)]],
       confirmPassword: ['', [Validators.required, this.matchValues('password')]]
     });
 
+    this.profileForm = this.fb.group({
+      gender: ['', Validators.required],
+      dateOfBirth: ['', Validators.required],
+      city: ['', Validators.required],
+      country: ['', Validators.required],
+    })
+
     //custom validation only occurs on the confirm password if we correct the password after confirm password we will get invalid because the confirm password does not know that the password field has been changed so we need some mechanism for that as well that is done in here.
 
-    this.registerForm.controls['password'].valueChanges.subscribe(() => {
-      this.registerForm.controls['confirmPassword'].updateValueAndValidity();
+    this.credentialsForm.controls['password'].valueChanges.subscribe(() => {
+      this.credentialsForm.controls['confirmPassword'].updateValueAndValidity();
     })
 
   }
@@ -48,9 +57,24 @@ export class Register {
     }
   }
 
+  nextStep(){
+    if(this.credentialsForm.valid){
+      this.currentStep.update(prevStep => prevStep + 1);
+    }
+  }
+
+  prevStep(){
+    this.currentStep.update(prevStep => prevStep - 1);
+  }
+
   register() {
 
-    console.log(this.registerForm.value);
+    if(this.profileForm.valid && this.credentialsForm.valid){
+      const formData = {... this.credentialsForm.value, ...this.profileForm.value};
+      console.log("Form Data: ", formData);
+    }
+
+
     // this.accountService.register(this.creds).subscribe({
     //   next: response => {
     //     console.log(response);
