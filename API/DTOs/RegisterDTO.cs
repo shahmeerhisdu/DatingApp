@@ -18,4 +18,10 @@ public class RegisterDTO
 
     //these name should match while sending request from the client, but the issue is only requied parameter doesnot pervent us from sending the empty strings "", like in here public required string DisplayName { get; set; } it can store "". So remove the required from here
 
+    [Required]
+    public string Gender { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
+    public DateOnly DateOfBirth { get; set; }
+
 }

@@ -16,4 +16,8 @@ export type RegisterCreds = {
     email: string;
     displayName: string;
     password: string;
+    gender: string;
+    dateOfBirth: string; // string because we are not sending the time with the date this is just the string of the date
+    city: string;
+    country: string;
 }
