@@ -2,6 +2,7 @@ using System.Security.Claims;
 using API.DTOs;
 using API.Entities;
 using API.Extensions;
+using API.Helpers;
 using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,14 +31,14 @@ namespace API.Controllers
         // }
 
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<Member>>> GetMembers()
+        public async Task<ActionResult<IReadOnlyList<Member>>> GetMembers([FromQuery] PagingParams pagingParams) //as pagingparams is an object and we gonna pass this information as the querystring so we need to add the FromQuery.
         {
             // so what difference does this make?
             // So instead of request being blocked when it comes in to this API controller once we are awaiting for something to happen and comeback from our database, instead action of going out to another thread is delegated to another thread, that thread can go about the business for querying the databse, if thats the long running database query it is not gonna effect our API controller from servicing our request.
             // var members = await context.Users.ToListAsync();
             // return members;
 
-            return Ok(await memberRepository.GetMembersAsync());
+            return Ok(await memberRepository.GetMembersAsync(pagingParams));
             // by this Ok(await memberRepository.GetMembersAsync()) we loose the type safety, if we change the return type from member to AppUser it will not complain because we are using the Ok response, so IActionResult was used as a way to get a bit of type safety in controller method, and it works for most things a part from list and a repository.
         }
 
