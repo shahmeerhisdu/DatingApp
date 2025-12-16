@@ -11,6 +11,7 @@ export class Paginator {
   pageNumber = model(1);
   pageSize = model(10);
   totalCount = input(0);
+  totalPages = input(0);
   pageSizeOptions = input([5, 10, 20, 50]);
 
   // we will have the output property with the name pageChange that we will send to the parent component when the user clicks on a different page number, because we need to send this information to our service so that it can go and request the next batch of pages.
