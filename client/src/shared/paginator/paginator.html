@@ -13,6 +13,11 @@
     </div>
 
     <div class="flex items-center gap-2">
-        <button class="btn btn-circle btn-ghost" [disabled]="pageNumber() == 1" (click)="onPageChange(pageNumber() - 1)"></button>
+        <button class="btn btn-circle btn-ghost" [disabled]="pageNumber() == 1" (click)="onPageChange(pageNumber() - 1)">
+            &larr;
+        </button>
+        <button class="btn btn-circle btn-ghost" [disabled]="pageNumber() == 1" (click)="onPageChange(pageNumber() + 1)">
+            &rarr;
+        </button>
     </div>
 </div>
