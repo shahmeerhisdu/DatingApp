@@ -25,7 +25,7 @@ public class MemberRepository(AppDbContext context) : IMemberRepository
     {
         var query = context.Members.AsQueryable();
 
-        query = query.Where(x => x.Id != memberParams.CurrentMemberId);
+        query = query.Where(x => x.Id != memberParams.CurrentMemberId);//check
 
         if (memberParams.Gender != null)
         {
