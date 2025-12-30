@@ -50,7 +50,7 @@ namespace API.Data
 
                     var likeIds = await GetCurrentMemberLikeIds(memberId);
                     return await query
-                        .Where(m => m.SourceMemberId == memberId && likeIds.Contains(m.SourceMemberId))
+                        .Where(m => m.TargetMemberId == memberId && likeIds.Contains(m.SourceMemberId))
                         .Select(m => m.SourceMember)
                         .ToListAsync();
             }
