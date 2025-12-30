@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { AccountService } from './account-service';
 import { of } from 'rxjs';
+import { LikesService } from './likes-service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,6 +9,7 @@ import { of } from 'rxjs';
 export class InitService {
 
   private accountService = inject(AccountService)
+  private likesService = inject(LikesService);
 
   init(){
 
@@ -17,6 +19,7 @@ export class InitService {
 
     const user = JSON.parse(userString);
     this.accountService.currentUser.set(user)
+    this.likesService.getLikedIds(); //populate the likedIds signal in the LikesService when the application initializes if there is a logged in user.
 
     return of(null); //this is observeable from rxjs, this used to be called observeable of but they have shortened this to only of.
   }

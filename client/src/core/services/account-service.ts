@@ -3,6 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { LoginCreds, RegisterCreds, User } from '../../types/user';
 import { tap } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { LikesService } from './likes-service';
 
 @Injectable({
   providedIn: 'root' //this means that it is automatically provided to our application as a whole
@@ -16,6 +17,7 @@ export class AccountService {
   // constructor() { } we don't need the constructor as now the recommendation from the angular is to use the inject function.
 
   private http = inject(HttpClient);
+  private likeService = inject(LikesService); //don't inject AccountService into LikesService and LikesService into AccountService as this will create circular dependency and will break the application.
   currentUser = signal<User | null>(null)
 
   private baseUrl = environment.apiUrl;
@@ -45,11 +47,13 @@ export class AccountService {
   setCurrentUser(user: User) {
     localStorage.setItem('user', JSON.stringify(user))
     this.currentUser.set(user)
+    this.likeService.getLikedIds(); //this will populate the likedIds signal in the LikesService when we set the current user, and we can use that signal across the application to show which members are liked by the current user.
   }
 
   logout() {
     localStorage.removeItem('user')
     localStorage.removeItem('filters')
     this.currentUser.set(null)
+    this.likeService.clearLikedIds(); //clear the likedIds signal in the LikesService when we logout.
   }
 }
