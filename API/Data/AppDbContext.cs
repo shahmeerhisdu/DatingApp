@@ -27,6 +27,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
 
         modelBuilder.Entity<MemberLike>()
             .HasKey(x => new { x.SourceMemberId, x.TargetMemberId });
+
+        //we are saying here that one source member can have many liked members, and the foreign key is the sourcememberid, and should we delete the SouceMember then that gonna cascade into the MemberLike entity and delete all the related data.
         modelBuilder.Entity<MemberLike>()
             .HasOne(x => x.SouceMember)
             .WithMany(x => x.LikedMembers)
@@ -37,7 +39,7 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             .HasOne(x => x.TargetMember)
             .WithMany(x => x.LikedByMembers)
             .HasForeignKey(x => x.TargetMemberId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.NoAction);
 
         var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
             v => v.ToUniversalTime(),
