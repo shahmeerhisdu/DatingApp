@@ -1,5 +1,6 @@
 ﻿using API.DTOs;
 using API.Entities;
+using System.Linq.Expressions;
 
 namespace API.Extensions
 {
@@ -25,5 +26,22 @@ namespace API.Extensions
         }
 
         // we also need another object so that we can receive as parameter of what we need to create the message in our database.
+
+        public static Expression<Func<Message, MessageDto>> ToDtoProjection()
+        {
+            return message => new MessageDto
+            {
+                Id = message.Id,
+                SenderId = message.SenderId,
+                SenderDisplayName = message.Sender.DisplayName,
+                SenderImageUrl = message.Sender.ImageUrl,
+                RecipientId = message.RecipientId,
+                RecipientDisplayName = message.Recipient.DisplayName,
+                RecipientImageUrl = message.Recipient.ImageUrl,
+                Content = message.Content,
+                DateRead = message.DateRead,
+                MessageSent = message.MessageSent,
+            };
+        }
     }
 }

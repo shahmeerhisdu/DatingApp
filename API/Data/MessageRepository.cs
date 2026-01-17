@@ -1,5 +1,6 @@
 ﻿using API.DTOs;
 using API.Entities;
+using API.Extensions;
 using API.Helpers;
 using API.Interfaces;
 
@@ -22,10 +23,27 @@ namespace API.Data
             return await context.Messages.FindAsync(messageId);
         }
 
-        public Task<PaginatedResult<MessageDto>> GetMessagesForMember()
+        public async Task<PaginatedResult<MessageDto>> GetMessagesForMember(MessageParams messageParams)
         {
             //we need to return the messageDto outside of this repository as well, so we have used the automapper project to map the message to messageDto but automapper is going to be commercial, so to achieve this functionality we will be using the extension methods
-            throw new NotImplementedException();
+            var query = context.Messages
+                .OrderByDescending(x => x.MessageSent) //because this is IOrderable but PaginatedResult has different return type
+                .AsQueryable();
+
+            query = messageParams.Container switch
+            {
+                "Outbox" => query.Where(x => x.SenderId == messageParams.MemberId),
+                _ => query.Where(x => x.RecipientId == messageParams.MemberId)
+            };
+
+            //create the projection for the MessageDto
+
+            /*var messageQuery = query.Select(message => message.ToDto());*/ // this will not work because select expects an expression and we will need to create the new Extension method for this.
+
+            var messageQuery = query.Select(MessageExtensions.ToDtoProjection());
+            //this is going to do effectively inside our database. We are not gonna get the message first and then convert into the DTO which is effectively what we are doing for ToDto method. By this projection we are making the part of the expression down here where we are sending the createasync request with pagination. And what this also means is that even though the sender and recepient are related entities of a message we don't need to eagerly load either of them because the projection is going to select what we need to satisfy our dtoprojection.
+
+            return await PaginationHelper.CreateAsync(messageQuery, messageParams.PageNumber, messageParams.PageSize);
         }
 
         public Task<IReadOnlyList<MessageDto>> GetMessageThread(string currentMemberId, string recipientId)
