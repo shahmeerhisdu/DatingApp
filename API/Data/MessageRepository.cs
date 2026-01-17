@@ -24,6 +24,7 @@ namespace API.Data
 
         public Task<PaginatedResult<MessageDto>> GetMessagesForMember()
         {
+            //we need to return the messageDto outside of this repository as well, so we have used the automapper project to map the message to messageDto but automapper is going to be commercial, so to achieve this functionality we will be using the extension methods
             throw new NotImplementedException();
         }
 
@@ -32,7 +33,7 @@ namespace API.Data
             throw new NotImplementedException();
         }
 
-        public async Task<bool> SaveAllChanges()
+        public async Task<bool> SaveAllAsync()
         {
             return await context.SaveChangesAsync() > 0;
         }
