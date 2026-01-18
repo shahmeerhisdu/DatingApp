@@ -44,6 +44,12 @@ namespace API.Controllers
 
             return await messageRepository.GetMessagesForMember(messageParams);
         }
+
+        [HttpGet("thread/{recipientId}")]
+        public async Task<ActionResult<IReadOnlyList<MessageDto>>> GetMessageThread(string recipientId)
+        {
+            return Ok(await messageRepository.GetMessageThread(User.GetMemberId(), recipientId));
+        }
     }
 
 }

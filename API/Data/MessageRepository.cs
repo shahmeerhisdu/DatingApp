@@ -3,6 +3,7 @@ using API.Entities;
 using API.Extensions;
 using API.Helpers;
 using API.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Data
 {
@@ -46,9 +47,18 @@ namespace API.Data
             return await PaginationHelper.CreateAsync(messageQuery, messageParams.PageNumber, messageParams.PageSize);
         }
 
-        public Task<IReadOnlyList<MessageDto>> GetMessageThread(string currentMemberId, string recipientId)
+        public async Task<IReadOnlyList<MessageDto>> GetMessageThread(string currentMemberId, string recipientId)
         {
-            throw new NotImplementedException();
+            // when the user get the message thread we want to mark the messages as read, and we will mark as read when the currentmemberId is equal to the recipientId
+            await context.Messages
+                .Where(m => m.RecipientId == currentMemberId && m.SenderId == recipientId && m.DateRead == null)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.DateRead, DateTime.UtcNow));
+
+            return await context.Messages
+                .Where(x => (x.RecipientId == currentMemberId && x.SenderId == recipientId) || (x.SenderId == currentMemberId && x.RecipientId == recipientId))
+                .OrderBy(x => x.MessageSent)
+                .Select(MessageExtensions.ToDtoProjection())
+                .ToListAsync();
         }
 
         public async Task<bool> SaveAllAsync()
