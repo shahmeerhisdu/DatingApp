@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, effect, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { MessageService } from '../../../core/services/message-service';
 import { MemberService } from '../../../core/services/member-service';
 import { Message } from '../../../types/message';
@@ -13,11 +13,23 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './member-messages.css'
 })
 export class MemberMessages implements OnInit {
+  @ViewChild('messageEndRef') messageEndRef!: ElementRef;
+
   private messageService = inject(MessageService);
   private memberService = inject(MemberService);
 
   protected messages = signal<Message[]>([]);
   protected messageContent = '';
+
+  constructor() {
+    effect(() => {
+      //this effect will run whenever the messages signal changes
+      const currentMessages = this.messages();
+
+      if (currentMessages.length > 0)
+        this.scrollToBottom();
+    });
+  }
 
   ngOnInit(): void {
     this.loadMessages();
@@ -39,7 +51,7 @@ export class MemberMessages implements OnInit {
 
   sendMessage() {
     const recipientId = this.memberService.member()?.id;
-    if(!recipientId) return;
+    if (!recipientId) return;
     this.messageService.sendMessage(recipientId, this.messageContent).subscribe({
       next: (message) => {
         this.messages.update(messages => {
@@ -49,5 +61,16 @@ export class MemberMessages implements OnInit {
         this.messageContent = '';
       }
     });
+  }
+
+  scrollToBottom(): void {
+
+    //we need to call this method when the component has rendered, or after the JS call stack is clear.
+    setTimeout(() => {
+      if (this.messageEndRef) {
+        this.messageEndRef.nativeElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+
   }
 }
