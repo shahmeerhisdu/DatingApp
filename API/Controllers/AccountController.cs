@@ -22,8 +22,7 @@ public class AccountController(AppDbContext context, ITokenService tokenService)
         {
             DisplayName = registerDTO.DisplayName,
             Email = registerDTO.Email,
-            PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDTO.Password)),
-            PasswordSalt = hmac.Key,
+            UserName = registerDTO.Email,
             Member = new Member
             {
                 DisplayName = registerDTO.DisplayName,
@@ -60,14 +59,6 @@ public class AccountController(AppDbContext context, ITokenService tokenService)
             return Unauthorized("Invalid Email Address");
         }
 
-        using var hmac = new HMACSHA512(user.PasswordSalt);
-
-        var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDto.Password));// this is the byte array so we can loop
-
-        for (var i = 0; i < computedHash.Length; i++)
-        {
-            if (computedHash[i] != user.PasswordHash[i]) return Unauthorized("Invalid Password");
-        }
         // return new UserDto
         // {
         //     Id = user.Id,
@@ -80,7 +71,7 @@ public class AccountController(AppDbContext context, ITokenService tokenService)
 
     private async Task<bool> EmailExists(string email)
     {
-        return await context.Users.AnyAsync(user => user.Email.ToLower() == email.ToLower());
+        return await context.Users.AnyAsync(user => user.Email!.ToLower() == email.ToLower());
     }
 }
 

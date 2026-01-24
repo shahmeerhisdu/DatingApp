@@ -30,7 +30,7 @@ public class TokenService(IConfiguration config) : ITokenService
 
         var claims = new List<Claim>
         {
-            new (ClaimTypes.Email, user.Email), // thats a modern way of creating the object new Claim(ClaimTypes.Email,..)
+            new (ClaimTypes.Email, user.Email!), // thats a modern way of creating the object new Claim(ClaimTypes.Email,..)
             new (ClaimTypes.NameIdentifier, user.Id),
             // new ("CustomWhatevet", "CustomThing") //this is also fine for custom claim
         };
