@@ -6,18 +6,18 @@ using API.DTOs;
 using API.Entities;
 using API.Extensions;
 using API.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers;
 
-public class AccountController(AppDbContext context, ITokenService tokenService) : BaseApiController
+public class AccountController(UserManager<AppUser> userManager, ITokenService tokenService) : BaseApiController
 {
     [HttpPost("register")] // api/account/register
     public async Task<ActionResult<UserDto>> Register(RegisterDTO registerDTO)
     {
-        if (await EmailExists(registerDTO.Email)) return BadRequest("Email is taken");
-        using var hmac = new HMACSHA512(); // cryptography class
+        
         var user = new AppUser
         {
             DisplayName = registerDTO.DisplayName,
@@ -34,16 +34,16 @@ public class AccountController(AppDbContext context, ITokenService tokenService)
 
         };
 
-        context.Add(user);
-        await context.SaveChangesAsync();
+        var result = await userManager.CreateAsync(user, registerDTO.Password);
 
-        // return new UserDto
-        // {
-        //     Id = user.Id,
-        //     DisplayName = user.DisplayName,
-        //     Email = user.Email,
-        //     Token = tokenService.CreateToken(user)
-        // };
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError("identity", error.Description);
+            }
+            return ValidationProblem();
+        }
 
         //extension method toDto takes two parameters but we are passing only token service because this refers to the user here to which its extending in the todto method.
         return user.ToDto(tokenService);
@@ -52,27 +52,23 @@ public class AccountController(AppDbContext context, ITokenService tokenService)
     [HttpPost("login")]
     public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
     {
-        var user = await context.Users.SingleOrDefaultAsync(user => user.Email == loginDto.Email);
+        var user = await userManager.FindByEmailAsync(loginDto.Email);
 
         if (user == null)
         {
             return Unauthorized("Invalid Email Address");
         }
 
-        // return new UserDto
-        // {
-        //     Id = user.Id,
-        //     DisplayName = user.DisplayName,
-        //     Email = user.Email,
-        //     Token = tokenService.CreateToken(user)
-        // };
+        var result = await userManager.CheckPasswordAsync(user, loginDto.Password);
+
+        if (!result)
+        {
+            return Unauthorized("Invalid Password");
+        }
+
         return user.ToDto(tokenService);
     }
 
-    private async Task<bool> EmailExists(string email)
-    {
-        return await context.Users.AnyAsync(user => user.Email!.ToLower() == email.ToLower());
-    }
 }
 
 //notes 
