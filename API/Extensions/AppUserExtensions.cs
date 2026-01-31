@@ -10,7 +10,7 @@ public static class AppUserExtensions
     // and when we make a class static that means we don't need to create the instance of this class in order to use its functioanlity
     // we can not use the dependency injection in the static classes
 
-    public static UserDto ToDto(this AppUser user, ITokenService tokenService)
+    public static async Task<UserDto> ToDto(this AppUser user, ITokenService tokenService)
     {
         //the first parameter of the class will be the thing that we are extending and we reference using this keyword
         return new UserDto
@@ -19,7 +19,7 @@ public static class AppUserExtensions
             DisplayName = user.DisplayName,
             ImageUrl = user.ImageUrl,
             Email = user.Email!,
-            Token = tokenService.CreateToken(user)
+            Token = await tokenService.CreateToken(user)
         };
     }
 }

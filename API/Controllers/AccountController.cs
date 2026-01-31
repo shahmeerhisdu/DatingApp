@@ -46,7 +46,7 @@ public class AccountController(UserManager<AppUser> userManager, ITokenService t
         }
 
         //extension method toDto takes two parameters but we are passing only token service because this refers to the user here to which its extending in the todto method.
-        return user.ToDto(tokenService);
+        return await user.ToDto(tokenService);
     }
 
     [HttpPost("login")]
@@ -66,7 +66,7 @@ public class AccountController(UserManager<AppUser> userManager, ITokenService t
             return Unauthorized("Invalid Password");
         }
 
-        return user.ToDto(tokenService);
+        return await user.ToDto(tokenService);
     }
 
 }
