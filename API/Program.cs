@@ -63,6 +63,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     We gonna inject not the implementation class but the interface class when we use it in the account controller and because we have registered in this way builder.Services.AddScoped<ITokenService, TokenService>(); then the framework knows that when we are using this ITokenService then its implementation class is going to be this (TokenService) one so create the instance of TokenService when we need to create a Token.
 **/
 
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"))
+    .AddPolicy("ModeratePhotoRole", policy => policy.RequireRole("Admin", "Moderator"));
+
 var app = builder.Build();
 //Middleware comes on the top of the request pipeline
 app.UseMiddleware<ExceptionMiddleware>();
