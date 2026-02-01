@@ -45,6 +45,7 @@ export class AccountService {
   }
 
   setCurrentUser(user: User) {
+    user.roles = this.getRolesFromToken(user);
     localStorage.setItem('user', JSON.stringify(user))
     this.currentUser.set(user)
     this.likeService.getLikedIds(); //this will populate the likedIds signal in the LikesService when we set the current user, and we can use that signal across the application to show which members are liked by the current user.
@@ -55,5 +56,12 @@ export class AccountService {
     localStorage.removeItem('filters')
     this.currentUser.set(null)
     this.likeService.clearLikedIds(); //clear the likedIds signal in the LikesService when we logout.
+  }
+
+  private getRolesFromToken(user: User): string[] {
+    const payload = user.token.split('.')[1];
+    const decodedPayload = atob(payload);//atob is a built-in function in JavaScript that decodes a base-64 encoded string.
+    const tokenData = JSON.parse(decodedPayload);
+    return Array.isArray(tokenData.role) ? tokenData.role : [tokenData.role];
   }
 }
