@@ -1,16 +1,63 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using API.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
-    public class AdminController : BaseApiController
+    public class AdminController(UserManager<AppUser> userManager) : BaseApiController
     {
         [Authorize(Policy = "RequireAdminRole")]
         [HttpGet("users-with-roles")]
-        public ActionResult GetUsersWithRoles()
+        public async Task<ActionResult> GetUsersWithRoles()
         {
-            return Ok("Only Admins can see this");
+            var users  = await userManager.Users.ToListAsync();
+            var userList = new List<object>();
+
+            foreach (var user in users)
+            {
+                var roles = await userManager.GetRolesAsync(user);
+                userList.Add(new
+                {
+                    user.Id,
+                    user.Email,
+                    Roles = roles.ToList()
+                });
+            }
+
+            return Ok(userList);
         }
+
+        [Authorize(Policy = "RequireAdminRole")]
+        [HttpPost("edit-roles/{userId}")]
+        public async Task<ActionResult<IList<string>>> EditRoles (string userId, [FromQuery]string roles)
+        {
+            if (string.IsNullOrEmpty(roles)) return BadRequest("You must select at least one role");
+
+            var selectedRoles = roles.Split(",").ToArray();
+
+            var user = await userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                return BadRequest("Could not retrieve user");
+            }
+
+            var userRoles = await userManager.GetRolesAsync(user);
+
+            var rolesToAdd = selectedRoles.Except(userRoles);
+            var rolesToRemove = userRoles.Except(selectedRoles);
+
+            var addResult = await userManager.AddToRolesAsync(user, rolesToAdd);
+            if (!addResult.Succeeded) return BadRequest("Failed to add roles");
+
+            var removeResult = await userManager.RemoveFromRolesAsync(user, rolesToRemove);
+            if (!removeResult.Succeeded) return BadRequest("Failed to remove roles");
+
+            return Ok(await userManager.GetRolesAsync(user));
+        }
+
 
         [Authorize(Policy = "ModeratePhotoRole")]
         [HttpGet("photos-to-moderate")]

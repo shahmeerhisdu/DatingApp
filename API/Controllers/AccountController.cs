@@ -45,6 +45,8 @@ public class AccountController(UserManager<AppUser> userManager, ITokenService t
             return ValidationProblem();
         }
 
+        await userManager.AddToRoleAsync(user, "Member");
+
         //extension method toDto takes two parameters but we are passing only token service because this refers to the user here to which its extending in the todto method.
         return await user.ToDto(tokenService);
     }
