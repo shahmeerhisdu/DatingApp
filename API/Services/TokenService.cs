@@ -1,6 +1,7 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using API.Entities;
@@ -49,7 +50,7 @@ public class TokenService(IConfiguration config, UserManager<AppUser> userManage
         {
             //Specify the properties that our token needs
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddDays(7),
+            Expires = DateTime.UtcNow.AddMinutes(7),
             SigningCredentials = creds
         };
 
@@ -58,6 +59,13 @@ public class TokenService(IConfiguration config, UserManager<AppUser> userManage
         var token = tokenHandler.CreateToken(tokenDescriptor);
 
         return tokenHandler.WriteToken(token);
+    }
+
+    public string GenerateRefreshToken()
+    {
+        //we are gonna store this long live refresh token along with the user object in the database and we gonna return to the client browser as the cookie and HTTP only secure cookie and we will do this inside the account controller.
+        var randomBytes = RandomNumberGenerator.GetBytes(64);
+        return Convert.ToBase64String(randomBytes);
     }
 }
 

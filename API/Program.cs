@@ -73,7 +73,7 @@ app.UseMiddleware<ExceptionMiddleware>();
 
 
 // Configure the HTTP request pipeline, section under this is the middleware section, ordering in this section is important if we put the cors command after the run command that it will not be executed
-app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:4200","https://localhost:4200"));
+app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowCredentials().WithOrigins("http://localhost:4200","https://localhost:4200"));
 
 app.UseAuthentication(); //ordering is important
 app.UseAuthorization();
