@@ -1,20 +1,20 @@
 using System;
 using API.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace API.Data;
 
 //register this class in program.cs as service
-public class AppDbContext(DbContextOptions options) : DbContext(options)
+public class AppDbContext(DbContextOptions options) : IdentityDbContext<AppUser>(options)
 {
     // we need to pass the options to DbContext forexample the connections strings
     // public AppDbContext(DbContextOptions options) : base(options)
     // {
     //old way to wrting the base constructor
     // }
-
-    public DbSet<AppUser> Users { get; set; }
     public DbSet<Member> Members { get; set; }
     public DbSet<Photo> Photos { get; set; }
     public DbSet<MemberLike> Likes { get; set; }
@@ -25,6 +25,28 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     {
         //we can use this when we need to configure or override the entity framework conventions
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<IdentityRole>()
+            .HasData(
+                new IdentityRole
+                {
+                    Id = "Member_id",
+                    Name = "Member",
+                    NormalizedName = "MEMBER"
+                },
+                new IdentityRole 
+                {
+                    Id = "Moderator_id",
+                    Name = "Moderator",
+                    NormalizedName = "MODERATOR"
+                },
+                new IdentityRole
+                {
+                    Id = "Admin_id",
+                    Name = "Admin",
+                    NormalizedName = "ADMIN"
+                }
+            );
 
         modelBuilder.Entity<Message>()
             .HasOne(x => x.Recipient)

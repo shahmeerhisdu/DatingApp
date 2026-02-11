@@ -1,7 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { AccountService } from './account-service';
-import { of } from 'rxjs';
-import { LikesService } from './likes-service';
+import { tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -9,19 +8,19 @@ import { LikesService } from './likes-service';
 export class InitService {
 
   private accountService = inject(AccountService)
-  private likesService = inject(LikesService);
 
-  init(){
-
-    //in reality it should return something so that we should know that user is logged in, to return async code in angular we use the observeables.
-    const userString = localStorage.getItem('user');
-    if(!userString) return of(null);
-
-    const user = JSON.parse(userString);
-    this.accountService.currentUser.set(user)
-    this.likesService.getLikedIds(); //populate the likedIds signal in the LikesService when the application initializes if there is a logged in user.
-
-    return of(null); //this is observeable from rxjs, this used to be called observeable of but they have shortened this to only of.
+  init() {
+    
+    return this.accountService.refreshToken().pipe(
+      tap(user => {
+        debugger
+        if (user) {
+          debugger
+          this.accountService.setCurrentUser(user)
+          this.accountService.startTokenRefreshInterval(); //start the token refresh interval when the application initializes if there is a logged in user, this will ensure that the token is refreshed automatically when it expires, and we don't have to worry about it in the rest of our application.
+        }
+      })
+    )
   }
   constructor() { }
 }

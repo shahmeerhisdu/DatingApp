@@ -9,6 +9,7 @@ using System.Text;
 using API.Middleware;
 using API.Helpers;
 using API.Entities;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,16 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<ILikesRepository, LikesRepository>();
 builder.Services.AddScoped<LogUserActivity>(); // we need to add this as the scoped service so that we can use it in the action filter and we are going to use it in our BaseApiController so that it will be applied to all the controllers that are inheriting from BaseApiController.
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+
+//Configuring the ASP.NET Identity
+builder.Services.AddIdentityCore<AppUser>(opt =>
+{
+    opt.Password.RequireNonAlphanumeric = false;
+    opt.User.RequireUniqueEmail = true;
+})
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -52,13 +63,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     We gonna inject not the implementation class but the interface class when we use it in the account controller and because we have registered in this way builder.Services.AddScoped<ITokenService, TokenService>(); then the framework knows that when we are using this ITokenService then its implementation class is going to be this (TokenService) one so create the instance of TokenService when we need to create a Token.
 **/
 
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"))
+    .AddPolicy("ModeratePhotoRole", policy => policy.RequireRole("Admin", "Moderator"));
+
 var app = builder.Build();
 //Middleware comes on the top of the request pipeline
 app.UseMiddleware<ExceptionMiddleware>();
 
 
 // Configure the HTTP request pipeline, section under this is the middleware section, ordering in this section is important if we put the cors command after the run command that it will not be executed
-app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:4200","https://localhost:4200"));
+app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowCredentials().WithOrigins("http://localhost:4200","https://localhost:4200"));
 
 app.UseAuthentication(); //ordering is important
 app.UseAuthorization();
@@ -71,8 +86,9 @@ var services = scope.ServiceProvider;
 try
 {
     var context = services.GetRequiredService<AppDbContext>();
+    var userManager = services.GetRequiredService<UserManager<AppUser>>();
     await context.Database.MigrateAsync();
-    await Seed.SeedUsers(context);
+    await Seed.SeedUsers(userManager);
 }
 catch (Exception ex)
 {
