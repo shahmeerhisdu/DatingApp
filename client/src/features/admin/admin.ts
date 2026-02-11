@@ -11,10 +11,10 @@ import { PhotoManagement } from "./photo-management/photo-management";
 })
 export class Admin {
   protected accountService = inject(AccountService);
-  activeTab = 'Photos';
+  activeTab = 'photos';
   tabs = [
-    {label: 'Photo Moderation', value: 'Photos'},
-    {label: 'User Management', value: 'Roles'}
+    {label: 'Photo Moderation', value: 'photos'},
+    {label: 'User Management', value: 'roles'}
   ];
 
   setTab(tab: string){

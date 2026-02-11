@@ -23,36 +23,57 @@ export class AccountService {
   private baseUrl = environment.apiUrl;
 
   register(creds: RegisterCreds) {
-    return this.http.post<User>(this.baseUrl + 'account/register', creds).pipe(
+    return this.http.post<User>(this.baseUrl + 'account/register', creds, { withCredentials: true }).pipe(
       // tap function allows us to use a side effect on what we get back from our API without actually modifying the data
       tap(user => {
         if (user) {
           this.setCurrentUser(user)
+          this.startTokenRefreshInterval(); //start the token refresh interval when we register a new user, this will ensure that the token is refreshed automatically when it expires, and we don't have to worry about it in the rest of our application.
         }
       })
     )
   }
 
   login(creds: LoginCreds) {
-    return this.http.post<User>(this.baseUrl + 'account/login', creds).pipe(
+    return this.http.post<User>(this.baseUrl + 'account/login', creds, { withCredentials: true }).pipe(
       // tap function allows us to use a side effect on what we get back from our API without actually modifying the data
       tap(user => {
+        debugger
         if (user) {
           this.setCurrentUser(user)
+          this.startTokenRefreshInterval(); //start the token refresh interval when we login, this will ensure that the token is refreshed automatically when it expires, and we don't have to worry about it in the rest of our application.
         }
       })
     )
   }
 
+  refreshToken() {
+    debugger
+    return this.http.post<User>(this.baseUrl + 'account/refresh-token', {}, { withCredentials: true })
+  }
+
+  startTokenRefreshInterval() {
+    setInterval(() => {
+      this.http.post<User>(this.baseUrl + 'account/refresh-token', {}, { withCredentials: true }).subscribe(
+        {
+          next: user => {
+            this.setCurrentUser(user);
+          }, //this will issue the new token to us
+          error: () =>{
+            this.logout(); //if we fail to refresh the token, we will log out the user, this can happen when the refresh token expires or is invalid for some reason, so we want to log out the user in that case.
+          }
+        }
+      )
+    }, 5 * 60 * 1000) // Refresh token every 5 minutes
+  }
+
   setCurrentUser(user: User) {
     user.roles = this.getRolesFromToken(user);
-    localStorage.setItem('user', JSON.stringify(user))
     this.currentUser.set(user)
     this.likeService.getLikedIds(); //this will populate the likedIds signal in the LikesService when we set the current user, and we can use that signal across the application to show which members are liked by the current user.
   }
 
   logout() {
-    localStorage.removeItem('user')
     localStorage.removeItem('filters')
     this.currentUser.set(null)
     this.likeService.clearLikedIds(); //clear the likedIds signal in the LikesService when we logout.

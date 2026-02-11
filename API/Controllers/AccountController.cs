@@ -75,7 +75,7 @@ public class AccountController(UserManager<AppUser> userManager, ITokenService t
         return await user.ToDto(tokenService);
     }
 
-    [HttpPost("refresh_token")]
+    [HttpPost("refresh-token")]
     public async Task<ActionResult<UserDto>> RefreshToken()
     {
         var refreshToken = Request.Cookies["refreshToken"];
@@ -111,7 +111,7 @@ public class AccountController(UserManager<AppUser> userManager, ITokenService t
             Expires = DateTime.UtcNow.AddDays(7)
         };
 
-        Response.Cookies.Append('refreshToken', refreshToken, cookieOptions);
+        Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
     }
 
 }
