@@ -10,6 +10,7 @@ using API.Middleware;
 using API.Helpers;
 using API.Entities;
 using Microsoft.AspNetCore.Identity;
+using API.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,7 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<ILikesRepository, LikesRepository>();
 builder.Services.AddScoped<LogUserActivity>(); // we need to add this as the scoped service so that we can use it in the action filter and we are going to use it in our BaseApiController so that it will be applied to all the controllers that are inheriting from BaseApiController.
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.AddSignalR(); // need middelware for this so that requests that come to our signalR should be forwarded to the presenceHub
 
 //Configuring the ASP.NET Identity
 builder.Services.AddIdentityCore<AppUser>(opt =>
@@ -80,6 +82,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // we can not have the dependency injection here, but we can hold of our AppDbContext using the pattern and is referred to as a service locator pattern
+app.MapHub<PresenceHub>("hubs/presence");
 
 using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;
