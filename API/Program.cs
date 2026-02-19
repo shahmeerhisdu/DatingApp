@@ -52,6 +52,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false, // we only accept token issued by certain issuer
             ValidateAudience = false // specify who the audiance is.
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            //Now when the client browser first makes the connection with the signalR, then it does send up an HTTP request to establish the connection to see what methods both the client and the server can use to use real time communication.
+            // Three options: 
+            //1: web sockets
+            //2: Long polling (old browser)
+            //3: Server side events (old browser)
+            // The initial request is made by the HTTP to setup the connection so that it can figure out what communication protocol to use. After that once its gonna be established its gonna be using the web sockets, web sockets does not send up the authentication header so its gonna send up the access token as a query string and thats what we need to use for all future communcation. And that is why we need to set this configuration here, we need to hold that access token and then add that to the http context which is then going to be used in our presence hub when we are authorized.
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 /** we have three life times for the services.
     builder.Services.AddSingleton() 
@@ -82,7 +105,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // we can not have the dependency injection here, but we can hold of our AppDbContext using the pattern and is referred to as a service locator pattern
-app.MapHub<PresenceHub>("hubs/presence");
+app.MapHub<PresenceHub>("hubs/presence"); // now we need to configure identity with signalR, it is not gonna happen by default because what we are not using here is Http we are using websockets instead so we need to get the token in different way when we are using signalR
 
 using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;
