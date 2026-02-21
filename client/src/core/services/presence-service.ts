@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { ToastService } from './toast-service';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
@@ -11,6 +11,7 @@ export class PresenceService {
   private hubUrl = environment.hubUrl;
   private toast = inject(ToastService);
   hubConnection?: HubConnection
+  onlineUsers = signal<string[]>([]);
 
   createHubConnection(user: User) {
     this.hubConnection = new HubConnectionBuilder()
@@ -25,14 +26,17 @@ export class PresenceService {
 
     // now listen to the event of useronline and useroffline we craeted in the server presencehub. Name should exactly match.
 
-    this.hubConnection.on('UserOnline', email => {
-      this.toast.success(email + ' has connected');
+    this.hubConnection.on('UserOnline', userId => {
+      this.onlineUsers.update(users => [...users, userId]);
     })
 
-    this.hubConnection.on('UserOffline', email =>{
-      this.toast.info(email + ' has disconnected');
+    this.hubConnection.on('UserOffline', userId =>{
+      this.onlineUsers.update(users => users.filter(x => x !== userId))
     })
 
+    this.hubConnection.on('GetOnlineUsers', userIds => {
+      this.onlineUsers.set(userIds);
+    })
   }
   //now we will make the above connection when the user logs in, and on log out we will stop the connection.
   stopHubConnection(){

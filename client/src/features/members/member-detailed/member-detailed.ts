@@ -6,6 +6,7 @@ import { filter, Observable } from 'rxjs';
 import { Member } from '../../../types/member';
 import { AgePipe } from '../../../core/pipes/age-pipe';
 import { AccountService } from '../../../core/services/account-service';
+import { PresenceService } from '../../../core/services/presence-service';
 
 @Component({
   selector: 'app-member-detailed',
@@ -18,6 +19,7 @@ export class MemberDetailed implements OnInit {
   protected memberService = inject(MemberService);
   private route = inject(ActivatedRoute);
   private accountService = inject(AccountService);
+  protected presenceService = inject(PresenceService);
   private router = inject(Router); // we need to get the hold of the router to get the tile functionality done.
   // protected member$?: Observable<Member>;
   // protected member = signal<Member | undefined>(undefined);

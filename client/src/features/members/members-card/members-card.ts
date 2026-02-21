@@ -3,6 +3,7 @@ import { Member } from '../../../types/member';
 import { RouterLink } from '@angular/router';
 import { AgePipe } from '../../../core/pipes/age-pipe';
 import { LikesService } from '../../../core/services/likes-service';
+import { PresenceService } from '../../../core/services/presence-service';
 
 @Component({
   selector: 'app-members-card',
@@ -12,11 +13,12 @@ import { LikesService } from '../../../core/services/likes-service';
 })
 export class MembersCard {
   private likeService = inject(LikesService);
-
+  private presenceService = inject(PresenceService)
   member = input.required<Member>();
 
   // we can create a computed property to check if the current user has liked the user of the member card that we are looking at.
   protected hasLiked = computed(() => this.likeService.likedIds().includes(this.member().id))
+  protected isOnline = computed(() => this.presenceService.onlineUsers().includes(this.member().id));
 
   toggleLike(event: Event){
     event.stopPropagation(); //to prevent the click event from routing to user detail page.
