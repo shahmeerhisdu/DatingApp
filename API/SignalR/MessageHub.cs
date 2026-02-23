@@ -1,4 +1,7 @@
-﻿using API.Extensions;
+﻿using API.Data;
+using API.DTOs;
+using API.Entities;
+using API.Extensions;
 using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -7,7 +10,7 @@ using Microsoft.Extensions.Primitives;
 namespace API.SignalR
 {
     [Authorize]
-    public class MessageHub(IMessageRepository messageRepository) : Hub
+    public class MessageHub(IMessageRepository messageRepository, IMemberRepository memberRepository) : Hub
     {
         public override async Task OnConnectedAsync()
         {
@@ -26,6 +29,30 @@ namespace API.SignalR
 
             //notify the users in this group and pass back the message thread.
             await Clients.Group(groupName).SendAsync("ReceivedMessageThread", groupName);
+        }
+
+        public async Task SendMessage(CreateMessageDto createMessageDto)
+        {
+            var sender = await memberRepository.GetMemberByIdAsync(GetUserId());
+
+            var recipient = await memberRepository.GetMemberByIdAsync(createMessageDto.RecipientId);
+
+            if (recipient == null || sender == null || sender.Id == createMessageDto.RecipientId) throw new HubException("Can't send this message");
+
+            var message = new Message
+            {
+                SenderId = sender.Id,
+                RecipientId = recipient.Id,
+                Content = createMessageDto.Content
+            };
+
+            messageRepository.AddMessage(message);
+
+            if (await messageRepository.SaveAllAsync())
+            {
+                var group = GetGroupName(sender.Id, recipient.Id);
+                await Clients.Group(group).SendAsync("NewMessage", message.ToDto());
+            }
         }
 
         public override Task OnDisconnectedAsync(Exception? exception)
