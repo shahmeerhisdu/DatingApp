@@ -108,6 +108,8 @@ app.MapControllers();
 
 // we can not have the dependency injection here, but we can hold of our AppDbContext using the pattern and is referred to as a service locator pattern
 app.MapHub<PresenceHub>("hubs/presence"); // now we need to configure identity with signalR, it is not gonna happen by default because what we are not using here is Http we are using websockets instead so we need to get the token in different way when we are using signalR
+app.MapHub<MessageHub>("hubs/messages");
+
 
 using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;
