@@ -28,7 +28,7 @@ namespace API.SignalR
             var messages = await messageRepository.GetMessageThread(GetUserId(), otherUser);    
 
             //notify the users in this group and pass back the message thread.
-            await Clients.Group(groupName).SendAsync("ReceivedMessageThread", groupName);
+            await Clients.Group(groupName).SendAsync("ReceivedMessageThread", messages);
         }
 
         public async Task SendMessage(CreateMessageDto createMessageDto)

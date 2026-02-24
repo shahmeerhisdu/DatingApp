@@ -6,6 +6,7 @@ import { DatePipe } from '@angular/common';
 import { TimeAgoPipe } from '../../../core/pipes/time-ago-pipe';
 import { FormsModule } from '@angular/forms';
 import { PresenceService } from '../../../core/services/presence-service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-member-messages',
@@ -16,16 +17,19 @@ import { PresenceService } from '../../../core/services/presence-service';
 export class MemberMessages implements OnInit {
   @ViewChild('messageEndRef') messageEndRef!: ElementRef;
 
-  private messageService = inject(MessageService);
+  protected messageService = inject(MessageService);
   private memberService = inject(MemberService);
   protected presenceService = inject(PresenceService);
-  protected messages = signal<Message[]>([]);
+  private route = inject(ActivatedRoute); //this we need because we want to get the userId of the other user from the route parameter
   protected messageContent = '';
 
+  //We need to create the hub connection inside here because when this component is loaded thats when we want to connect to the signalR hub.
+
+  
   constructor() {
     effect(() => {
       //this effect will run whenever the messages signal changes
-      const currentMessages = this.messages();
+      const currentMessages = this.messageService.messageThread();
 
       if (currentMessages.length > 0)
         this.scrollToBottom();
@@ -33,35 +37,24 @@ export class MemberMessages implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadMessages();
+    this.route.parent?.paramMap.subscribe({
+      next: params =>{
+        const otherUserId = params.get('id');
+        if(!otherUserId){
+          throw new Error('Can not connect to the hub at this point');
+        }
+        this.messageService.createHubConnection(otherUserId)
+      }
+    })
   }
 
-  private loadMessages(): void {
-    const memberId = this.memberService.member()?.id;
-    if (memberId) {
-      this.messageService.getMessageThread(memberId).subscribe({
-        next: (messages) => {
-          this.messages.set(messages.map(message => ({
-            ...message,
-            currentUserSender: message.senderId !== memberId
-          })));
-        }
-      });
-    }
-  }
 
   sendMessage() {
     const recipientId = this.memberService.member()?.id;
     if (!recipientId) return;
-    this.messageService.sendMessage(recipientId, this.messageContent).subscribe({
-      next: (message) => {
-        this.messages.update(messages => {
-          message.currentUserSender = true;
-          return [...messages, message];
-        });
-        this.messageContent = '';
-      }
-    });
+    this.messageService.sendMessage(recipientId, this.messageContent)?.then(()=>{
+      this.messageContent = '';
+    })
   }
 
   scrollToBottom(): void {
