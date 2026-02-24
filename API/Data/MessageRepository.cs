@@ -9,6 +9,11 @@ namespace API.Data
 {
     public class MessageRepository(AppDbContext context) : IMessageRepository
     {
+        public void AddGroup(Group group)
+        {
+            context.Add<Group>(group);
+        }
+
         public void AddMessage(Message message)
         {
             context.Messages.Add(message);
@@ -19,9 +24,29 @@ namespace API.Data
             context.Messages.Remove(message);
         }
 
+        public async Task<Connection?> GetConnection(string connectionId)
+        {
+            return await context.Connections.FindAsync(connectionId);
+        }
+
+        public async Task<Group?> GetGroupForConnection(string connectionId)
+        {
+            return await context.Groups
+                .Include(x => x.Connecitons)
+                .Where(x => x.Connecitons.Any(c => c.ConnectionId == connectionId))
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<Message?> GetMessage(string messageId)
         {
             return await context.Messages.FindAsync(messageId);
+        }
+
+        public async Task<Group?> GetMessageGroup(string groupName)
+        {
+            return await context.Groups
+                .Include(x => x.Connecitons)
+                .FirstOrDefaultAsync(x => x.Name == groupName);
         }
 
         public async Task<PaginatedResult<MessageDto>> GetMessagesForMember(MessageParams messageParams)
@@ -59,6 +84,13 @@ namespace API.Data
                 .OrderBy(x => x.MessageSent)
                 .Select(MessageExtensions.ToDtoProjection())
                 .ToListAsync();
+        }
+
+        public async Task RemoveConnection(string connectionId)
+        {
+            await context.Connections
+                .Where(x => x.ConnectionId == connectionId)
+                .ExecuteDeleteAsync(); // Fire and forget, we attempt to remove the connection when the user disconnects from the signalR hub, and lets just remove that row from the database
         }
 
         public async Task<bool> SaveAllAsync()

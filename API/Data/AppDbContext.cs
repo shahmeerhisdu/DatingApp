@@ -19,6 +19,8 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<AppUser>
     public DbSet<Photo> Photos { get; set; }
     public DbSet<MemberLike> Likes { get; set; }
     public DbSet<Message> Messages { get; set; }
+    public DbSet<Group> Groups { get; set; }
+    public DbSet<Connection> Connections { get; set; }
 
     //the databases except the postgresql don't support the UTC datetime natively so we need to configure it manually, and will need to override the method that is inside the DbContext class
     protected override void OnModelCreating(ModelBuilder modelBuilder)
