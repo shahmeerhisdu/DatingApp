@@ -84,6 +84,7 @@ export class AccountService {
     localStorage.removeItem('filters')
     this.currentUser.set(null)
     this.likeService.clearLikedIds(); //clear the likedIds signal in the LikesService when we logout.
+    this.presenceService.stopHubConnection();
   }
 
   private getRolesFromToken(user: User): string[] {
