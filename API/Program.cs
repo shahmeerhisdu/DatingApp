@@ -118,6 +118,8 @@ try
     var context = services.GetRequiredService<AppDbContext>();
     var userManager = services.GetRequiredService<UserManager<AppUser>>();
     await context.Database.MigrateAsync();
+    //need to clear the connections from the database when the application restarts else they will be the permanent resident of the system and even if the user will not be in the group the message will be marked as read.
+    await context.Connections.ExecuteDeleteAsync();
     await Seed.SeedUsers(userManager);
 }
 catch (Exception ex)

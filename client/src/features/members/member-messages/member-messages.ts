@@ -1,4 +1,4 @@
-import { Component, effect, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, effect, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { MessageService } from '../../../core/services/message-service';
 import { MemberService } from '../../../core/services/member-service';
 import { Message } from '../../../types/message';
@@ -14,7 +14,7 @@ import { ActivatedRoute } from '@angular/router';
   templateUrl: './member-messages.html',
   styleUrl: './member-messages.css'
 })
-export class MemberMessages implements OnInit {
+export class MemberMessages implements OnInit, OnDestroy {
   @ViewChild('messageEndRef') messageEndRef!: ElementRef;
 
   protected messageService = inject(MessageService);
@@ -25,7 +25,7 @@ export class MemberMessages implements OnInit {
 
   //We need to create the hub connection inside here because when this component is loaded thats when we want to connect to the signalR hub.
 
-  
+
   constructor() {
     effect(() => {
       //this effect will run whenever the messages signal changes
@@ -35,12 +35,15 @@ export class MemberMessages implements OnInit {
         this.scrollToBottom();
     });
   }
+  ngOnDestroy(): void {
+    this.messageService.stopHubConnection();
+  }
 
   ngOnInit(): void {
     this.route.parent?.paramMap.subscribe({
-      next: params =>{
+      next: params => {
         const otherUserId = params.get('id');
-        if(!otherUserId){
+        if (!otherUserId) {
           throw new Error('Can not connect to the hub at this point');
         }
         this.messageService.createHubConnection(otherUserId)
@@ -52,7 +55,7 @@ export class MemberMessages implements OnInit {
   sendMessage() {
     const recipientId = this.memberService.member()?.id;
     if (!recipientId) return;
-    this.messageService.sendMessage(recipientId, this.messageContent)?.then(()=>{
+    this.messageService.sendMessage(recipientId, this.messageContent)?.then(() => {
       this.messageContent = '';
     })
   }

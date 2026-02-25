@@ -23,6 +23,7 @@ namespace API.SignalR
 
             var groupName = GetGroupName(GetUserId(), otherUser);
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+            await AddToGroup(groupName);
 
             //get the messages from the database.
             var messages = await messageRepository.GetMessageThread(GetUserId(), otherUser);    
@@ -46,21 +47,44 @@ namespace API.SignalR
                 Content = createMessageDto.Content
             };
 
+            var groupName = GetGroupName(sender.Id, recipient.Id);
+            var group = await messageRepository.GetMessageGroup(groupName);
+
+            if (group != null && group.Connecitons.Any(x => x.UserId == message.RecipientId))//then we know the recepient is in the message group
+            {
+                message.DateRead = DateTime.UtcNow;
+            }
             messageRepository.AddMessage(message);
 
             if (await messageRepository.SaveAllAsync())
             {
-                var group = GetGroupName(sender.Id, recipient.Id);
-                await Clients.Group(group).SendAsync("NewMessage", message.ToDto());
+                await Clients.Group(groupName).SendAsync("NewMessage", message.ToDto());
             }
         }
 
-        public override Task OnDisconnectedAsync(Exception? exception)
+        public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            //When a user disconnect from the signalR hub and they are inside the group, then it automatically going to be removed from the group
+            //When a user disconnect from the signalR hub and they are inside the group, then it automatically going to be removed from the group, but for our database we have to manually remove it.
+            await messageRepository.RemoveConnection(Context.ConnectionId);
             
-            return base.OnDisconnectedAsync(exception);
+            await base.OnDisconnectedAsync(exception);
 
+        }
+
+        private async Task<bool> AddToGroup(string groupName)
+        {
+            var group = await messageRepository.GetMessageGroup(groupName);
+            var connection = new Connection(Context.ConnectionId, GetUserId());
+
+            if (group == null)
+            {
+                group = new Group(groupName);
+                messageRepository.AddGroup(group);
+            }
+
+            group.Connecitons.Add(connection);
+
+            return await messageRepository.SaveAllAsync();
         }
 
         private static string GetGroupName(string? caller, string? other)
