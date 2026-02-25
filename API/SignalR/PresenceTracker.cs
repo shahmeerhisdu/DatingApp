@@ -36,5 +36,16 @@ namespace API.SignalR
         {
             return Task.FromResult(OnlineUsers.Keys.OrderBy(k => k).ToArray());
         }
+
+        //we need to track if the single user is online then we have to show the toast on the front end that you got a message.
+        public static Task<List<string>> GetConnectionsForUser(string userId)
+        {
+            if (OnlineUsers.TryGetValue(userId, out var connections))
+            {
+                return Task.FromResult(connections.Keys.ToList());
+            }
+
+            return Task.FromResult(new List<string>());
+        }
     }
 }

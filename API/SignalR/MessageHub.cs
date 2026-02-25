@@ -10,7 +10,7 @@ using Microsoft.Extensions.Primitives;
 namespace API.SignalR
 {
     [Authorize]
-    public class MessageHub(IMessageRepository messageRepository, IMemberRepository memberRepository) : Hub
+    public class MessageHub(IMessageRepository messageRepository, IMemberRepository memberRepository, IHubContext<PresenceHub> presenceHub) : Hub
     {
         public override async Task OnConnectedAsync()
         {
@@ -49,8 +49,9 @@ namespace API.SignalR
 
             var groupName = GetGroupName(sender.Id, recipient.Id);
             var group = await messageRepository.GetMessageGroup(groupName);
+            var userInGroup = group != null && group.Connecitons.Any(x => x.UserId == message.RecipientId);//then we know the recepient is in the message group
 
-            if (group != null && group.Connecitons.Any(x => x.UserId == message.RecipientId))//then we know the recepient is in the message group
+            if (userInGroup)
             {
                 message.DateRead = DateTime.UtcNow;
             }
@@ -59,6 +60,11 @@ namespace API.SignalR
             if (await messageRepository.SaveAllAsync())
             {
                 await Clients.Group(groupName).SendAsync("NewMessage", message.ToDto());
+                var connections = await PresenceTracker.GetConnectionsForUser(recipient.Id); // To track that user is online means user has the presence but the user is not on the message component so we can show the toast.
+                if (connections != null && connections.Count > 0 && !userInGroup) // user has the connection or user has the presence in the application but the user is not in the group that is created when message component is rendered
+                {
+                    await presenceHub.Clients.Clients(connections).SendAsync("NewMessageReceived", message.ToDto()); // we have to notify all of the connections on all devices
+                }
             }
         }
 
