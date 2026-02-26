@@ -31,6 +31,9 @@ export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
   if(req.method.includes('POST') && req.url.includes('/messages')){
     invalidateCache('/messages');
   }
+  if(req.method.includes('POST') && req.url.includes('/logout')){
+    cache.clear();
+  }
 
   // We are doing this for all of the get requests. But we need a process where we can invalidate this caching so that when a user do something like, liking another user, the cache is invalidated and the new data is fetched from the server instead of the cache.
   if(req.method === 'GET'){

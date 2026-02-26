@@ -62,7 +62,7 @@ export class AccountService {
           next: user => {
             this.setCurrentUser(user);
           }, //this will issue the new token to us
-          error: () =>{
+          error: () => {
             this.logout(); //if we fail to refresh the token, we will log out the user, this can happen when the refresh token expires or is invalid for some reason, so we want to log out the user in that case.
           }
         }
@@ -75,16 +75,21 @@ export class AccountService {
     this.currentUser.set(user)
     this.likeService.getLikedIds(); //this will populate the likedIds signal in the LikesService when we set the current user, and we can use that signal across the application to show which members are liked by the current user.
 
-    if(this.presenceService.hubConnection?.state !== HubConnectionState.Connected){
+    if (this.presenceService.hubConnection?.state !== HubConnectionState.Connected) {
       this.presenceService.createHubConnection(user);
     }
   }
 
   logout() {
-    localStorage.removeItem('filters')
-    this.currentUser.set(null)
-    this.likeService.clearLikedIds(); //clear the likedIds signal in the LikesService when we logout.
-    this.presenceService.stopHubConnection();
+    this.http.post(this.baseUrl + 'account/logout', {}, { withCredentials: true }).subscribe({
+      next: () => {
+        localStorage.removeItem('filters')
+        this.currentUser.set(null)
+        this.likeService.clearLikedIds(); //clear the likedIds signal in the LikesService when we logout.
+        this.presenceService.stopHubConnection();
+      }
+    })//using with credentials because we want our cookies to be removed
+
   }
 
   private getRolesFromToken(user: User): string[] {
