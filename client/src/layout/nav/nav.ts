@@ -37,6 +37,11 @@ export class Nav implements OnInit {
     if(elem) elem.blur();
   }
 
+  handleSelectUserItem(){
+    const elem = document.activeElement as HTMLDivElement
+    if(elem) elem.blur();
+  }
+
   login() {
     this.loading.set(true);
     this.accountService.login(this.creds).subscribe({

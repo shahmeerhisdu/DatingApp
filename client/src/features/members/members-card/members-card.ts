@@ -22,17 +22,7 @@ export class MembersCard {
 
   toggleLike(event: Event){
     event.stopPropagation(); //to prevent the click event from routing to user detail page.
-    this.likeService.toggleLike(this.member().id).subscribe({
-      next: () => {
-        if(this.hasLiked()){
-          //if already liked then we need to remove the like
-          this.likeService.likedIds.update(ids => ids.filter(id => id !== this.member().id));
-        } else{
-          this.likeService.likedIds.update(ids => [...ids, this.member().id]);
-        }
-      }
-
-    });
+    this.likeService.toggleLike(this.member().id)
   }
 
 }

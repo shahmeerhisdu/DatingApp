@@ -7,6 +7,7 @@ import { Member } from '../../../types/member';
 import { AgePipe } from '../../../core/pipes/age-pipe';
 import { AccountService } from '../../../core/services/account-service';
 import { PresenceService } from '../../../core/services/presence-service';
+import { LikesService } from '../../../core/services/likes-service';
 
 @Component({
   selector: 'app-member-detailed',
@@ -20,16 +21,24 @@ export class MemberDetailed implements OnInit {
   private route = inject(ActivatedRoute);
   private accountService = inject(AccountService);
   protected presenceService = inject(PresenceService);
+  protected likesService = inject(LikesService);
   private router = inject(Router); // we need to get the hold of the router to get the tile functionality done.
   // protected member$?: Observable<Member>;
   // protected member = signal<Member | undefined>(undefined);
   protected title = signal<string | undefined>('Profile');
-
+  private routeId = signal<string | null>(null);
   //edit working
   // We need a property inside here to check if this is the current user, we will take a look on to another type of singal to do this, and that is the computed signal and a computed signal use another signal to work out what its value should be.
   protected isCurrentUser = computed(()=>{
-    return this.accountService.currentUser()?.id === this.route.snapshot.paramMap.get('id');
+    return this.accountService.currentUser()?.id === this.routeId();
   })
+
+  protected hasLiked = computed(() => this.likesService.likedIds().includes(this.routeId()!))
+  constructor() {
+    this.route.paramMap.subscribe(params => {
+      this.routeId.set(params.get('id'))
+    })    
+  }
 
   ngOnInit(): void {
     // this.member$ = this.loadMember();
