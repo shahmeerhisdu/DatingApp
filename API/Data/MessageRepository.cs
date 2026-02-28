@@ -93,9 +93,5 @@ namespace API.Data
                 .ExecuteDeleteAsync(); // Fire and forget, we attempt to remove the connection when the user disconnects from the signalR hub, and lets just remove that row from the database
         }
 
-        public async Task<bool> SaveAllAsync()
-        {
-            return await context.SaveChangesAsync() > 0;
-        }
     }
 }

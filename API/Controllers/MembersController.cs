@@ -12,7 +12,7 @@ namespace API.Controllers
     [Authorize]
 
     // Always use the interface not the implementation class because it will not work as specified in the program.cs
-    public class MembersController(IMemberRepository memberRepository, IPhotoService photoService) : BaseApiController
+    public class MembersController(IUnitOfWork uow, IPhotoService photoService) : BaseApiController
     {
         // we inject the AppDbContext, what that means in practice is that when we receive a HTTP request is received by a .net application, it checks the route and forwards it to the appropriate controller, like if we receive a get request to this localhost:5001/api/Members it will be passed to this controller
 
@@ -39,7 +39,7 @@ namespace API.Controllers
             // return members;
             memberParams.CurrentMemberId = User.GetMemberId();
 
-            return Ok(await memberRepository.GetMembersAsync(memberParams));
+            return Ok(await uow.MemberRepository.GetMembersAsync(memberParams));
             // by this Ok(await memberRepository.GetMembersAsync()) we loose the type safety, if we change the return type from member to AppUser it will not complain because we are using the Ok response, so IActionResult was used as a way to get a bit of type safety in controller method, and it works for most things a part from list and a repository.
         }
 
@@ -47,7 +47,7 @@ namespace API.Controllers
         public async Task<ActionResult<Member>> GetMember(string id)
         {
             // var member = context.Users.Where(u => u.Id == id).FirstOrDefault();
-            var member = await memberRepository.GetMemberByIdAsync(id);
+            var member = await uow.MemberRepository.GetMemberByIdAsync(id);
             if (member == null)
                 return NotFound();
             return member;
@@ -56,7 +56,7 @@ namespace API.Controllers
         [HttpGet("{id}/photos")]
         public async Task<ActionResult<IReadOnlyList<Photo>>> GetMemberPhotos(string id)
         {
-            return Ok(await memberRepository.GetPhotosForMemberAsync(id));
+            return Ok(await uow.MemberRepository.GetPhotosForMemberAsync(id));
         }
 
         [HttpPut]
@@ -72,7 +72,7 @@ namespace API.Controllers
 
             var memberId = User.GetMemberId();
 
-            var member = await memberRepository.GetMemberForUpdate(memberId);
+            var member = await uow.MemberRepository.GetMemberForUpdate(memberId);
             if (member == null)
             {
                 return BadRequest("Could not get the member");
@@ -87,7 +87,7 @@ namespace API.Controllers
 
             // memberRepository.Update(member); //its just an optional
 
-            if (await memberRepository.SaveAllAsync())
+            if (await uow.Complete())
             {
                 return NoContent();
             }
@@ -100,7 +100,7 @@ namespace API.Controllers
 
         public async Task<ActionResult<Photo>> AddPhoto([FromForm]IFormFile file)
         {
-            var member = await memberRepository.GetMemberForUpdate(User.GetMemberId());
+            var member = await uow.MemberRepository.GetMemberForUpdate(User.GetMemberId());
 
             if (member == null) return BadRequest("Can't update the member");
 
@@ -123,7 +123,7 @@ namespace API.Controllers
 
             member.Photos.Add(photo);
 
-            if (await memberRepository.SaveAllAsync())
+            if (await uow.Complete())
             {
                 return photo;
             }
@@ -136,7 +136,7 @@ namespace API.Controllers
 
         public async Task<ActionResult> SetMainPhoto(int photoId)
         {
-            var member = await memberRepository.GetMemberForUpdate(User.GetMemberId());
+            var member = await uow.MemberRepository.GetMemberForUpdate(User.GetMemberId());
 
             if (member == null) return BadRequest("Can not get the member from the token");
 
@@ -150,7 +150,7 @@ namespace API.Controllers
             member.ImageUrl = photo.Url;
             member.User.ImageUrl = photo.Url;
 
-            if (await memberRepository.SaveAllAsync()) return NoContent();
+            if (await uow.Complete()) return NoContent();
 
             return BadRequest("Problem setting the main photo");
         }
@@ -158,7 +158,7 @@ namespace API.Controllers
         [HttpDelete("delete-photo/{photoId}")]
         public async Task<ActionResult> DeletePhoto(int photoId)
         {
-            var member = await memberRepository.GetMemberForUpdate(User.GetMemberId());
+            var member = await uow.MemberRepository.GetMemberForUpdate(User.GetMemberId());
 
             if (member == null) return BadRequest("Can not get the member from the token");
 
@@ -177,7 +177,7 @@ namespace API.Controllers
 
             member.Photos.Remove(photo);
 
-            if (await memberRepository.SaveAllAsync()) return Ok();
+            if (await uow.Complete()) return Ok();
 
             return BadRequest("Problem deleting the photo");
         }

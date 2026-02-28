@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
-    public class LikesController(ILikesRepository likesRepository) : BaseApiController
+    public class LikesController(IUnitOfWork uow) : BaseApiController
     {
         [HttpPost("{targetMemberId}")]
         public async Task<ActionResult> ToggleLike(string targetMemberId)
@@ -16,7 +16,7 @@ namespace API.Controllers
             var sourceMemberId = User.GetMemberId();
             if (sourceMemberId == targetMemberId)
                 return BadRequest("You cannot like yourself.");
-            var existingLike = await likesRepository.GetMemberLike(sourceMemberId, targetMemberId);
+            var existingLike = await uow.LikesRepository.GetMemberLike(sourceMemberId, targetMemberId);
             if (existingLike == null)
             {
                 var like = new MemberLike
@@ -24,13 +24,13 @@ namespace API.Controllers
                     SourceMemberId = sourceMemberId,
                     TargetMemberId = targetMemberId
                 };
-                likesRepository.AddLike(like); //this will add it to entity framework's change tracker
+                uow.LikesRepository.AddLike(like); //this will add it to entity framework's change tracker
             }
             else
             {
-                likesRepository.DeleteLike(existingLike);
+                uow.LikesRepository.DeleteLike(existingLike);
             }
-            if (await likesRepository.SaveAllChanges())
+            if (await uow.Complete())
                 return Ok();
             return BadRequest("Failed to update like.");
         }
@@ -39,14 +39,14 @@ namespace API.Controllers
         [HttpGet("list")]
         public async Task<ActionResult<IEnumerable<string>>> GetCuurentMemberLikeIds()
         {
-            return Ok(await likesRepository.GetCurrentMemberLikeIds(User.GetMemberId()));
+            return Ok(await uow.LikesRepository.GetCurrentMemberLikeIds(User.GetMemberId()));
         }
 
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<Member>>> GetMemberLikes([FromQuery] LikesParams likesParams)
         {
             likesParams.MemberId = User.GetMemberId();
-            var members = await likesRepository.GetMemberLikes(likesParams);
+            var members = await uow.LikesRepository.GetMemberLikes(likesParams);
             return Ok(members);
         }
     }
